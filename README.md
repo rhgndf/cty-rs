@@ -3,7 +3,7 @@
 Example usage:
 
 ```
-use cty::Cty;
+use cty_rs::Cty;
 
 fn main() {
     let cty = Cty::new("cty.dat").unwrap();
