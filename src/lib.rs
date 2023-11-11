@@ -53,6 +53,11 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
+fn get_timezone_offset(tz: &str) -> Result<FixedOffset, Box<dyn Error>> {
+    let tz = tz.parse::<f32>()?;
+    FixedOffset::west_opt((tz * 3600f32) as i32).ok_or("Invalid timezone".into())
+}
+
 impl Cty {
     pub fn new(filename: &str) -> Result<Cty, Box<dyn Error>> {
         let mut cty = Cty::default();
@@ -77,8 +82,8 @@ impl Cty {
                     continent: parts[3].to_string(),
                     lat: parts[4].parse::<f32>()?,
                     lon: parts[5].parse::<f32>()?,
-                    timezone: FixedOffset::east_opt(0).ok_or("Invalid timezone")?,
-                    prefix: parts[7].to_string().trim_start_matches("*").to_string(),
+                    timezone: get_timezone_offset(parts[6])?,
+                    prefix: parts[7].trim_start_matches("*").to_string(),
                     waedc: parts[7].starts_with('*'),
                     is_exact: false,
                 };
@@ -128,10 +133,7 @@ impl Cty {
                     // Match by ~.*~
                     let timezone_override = timezone_regex.captures(overrides);
                     if timezone_override.is_some() {
-                        entity.timezone = FixedOffset::east_opt(
-                            timezone_override.unwrap()[1].parse::<i32>()? * 3600,
-                        )
-                        .ok_or("Invalid timezone")?;
+                        entity.timezone = get_timezone_offset(&timezone_override.unwrap()[1])?;
                     }
                     cty.entities.insert(override_alias.to_string(), entity);
                 }
@@ -143,9 +145,11 @@ impl Cty {
         self.entities
             .get(callsign)
             .filter(|e| e.is_exact)
-            .or((1..=callsign.len())
-                .rev()
-                .find_map(|i| self.entities.get(&callsign[..i])))
+            .or_else(|| {
+                (1..=callsign.len())
+                    .rev()
+                    .find_map(|i| self.entities.get(&callsign[..i]))
+            })
     }
 }
 
@@ -186,7 +190,4 @@ mod tests {
         let entity = cty.lookup("BS7H").unwrap();
         assert_eq!(entity.name, "Scarborough Reef");
     }
-
-
-
 }
