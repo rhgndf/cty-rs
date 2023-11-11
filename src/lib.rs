@@ -54,7 +54,7 @@ where
 }
 
 impl Cty {
-    pub fn load(filename: &str) -> Result<Cty, Box<dyn Error>> {
+    pub fn new(filename: &str) -> Result<Cty, Box<dyn Error>> {
         let mut cty = Cty::default();
         let mut last_entity = Entity::default();
         let lines = read_lines(filename)?;
@@ -155,34 +155,34 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let cty = Cty::load("cty.dat");
+        let cty = Cty::new("cty.dat");
         assert!(cty.is_ok());
     }
 
     #[test]
     fn null_lookup() {
-        let cty = Cty::load("cty.dat").unwrap();
+        let cty = Cty::new("cty.dat").unwrap();
         let entity = cty.lookup("012");
         assert!(entity.is_none());
     }
 
     #[test]
     fn prefix_lookup() {
-        let cty = Cty::load("cty.dat").unwrap();
+        let cty = Cty::new("cty.dat").unwrap();
         let entity = cty.lookup("DL1ABC").unwrap();
         assert_eq!(entity.name, "Fed. Rep. of Germany");
     }
 
     #[test]
     fn alias_lookup() {
-        let cty = Cty::load("cty.dat").unwrap();
+        let cty = Cty::new("cty.dat").unwrap();
         let entity = cty.lookup("S6ABC").unwrap();
         assert_eq!(entity.name, "Singapore");
     }
 
     #[test]
     fn exact_lookup() {
-        let cty = Cty::load("cty.dat").unwrap();
+        let cty = Cty::new("cty.dat").unwrap();
         let entity = cty.lookup("BS7H").unwrap();
         assert_eq!(entity.name, "Scarborough Reef");
     }
